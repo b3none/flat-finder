@@ -11,14 +11,14 @@ $settings = [
         'consumer_key' => '<trade me consumer key',
         'consumer_secret' => '<trade me consumer secret>>',
         'search' => [
-            'photo_size'       => 'Large',
-            'bedrooms_min'     => '3',
-            'bedrooms_max'     => '4',
-            'district'         => '47',
-            'price_max'        => '630',
-            'property_type'    => 'House,Townhouse,Apartment',
-            'return_metadata'  => 'false',
-            'sort_order'       => 'Default'
+            'photo_size' => 'Large',
+            'bedrooms_min' => '3',
+            'bedrooms_max' => '4',
+            'district' => '47',
+            'price_max' => '630',
+            'property_type' => 'House,Townhouse,Apartment',
+            'return_metadata' => 'false',
+            'sort_order' => 'Default'
         ]
     ],
     'google' => [
@@ -28,8 +28,8 @@ $settings = [
             '<name>' => '<address>',
         ],
         'elevation' => [
-            'enabled'     => true,
-            'threshold'   => <elevation in meters>
+            'enabled' => true,
+            'threshold' => '<elevation in meters>'
         ]
     ]
 ];
