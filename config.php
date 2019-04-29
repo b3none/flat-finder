@@ -1,4 +1,5 @@
 <?php
+
 $settings = [
     'new_properties_since' => '<1-24>',
     'slack' => [

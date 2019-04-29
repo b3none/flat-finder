@@ -1,19 +1,47 @@
 <?php
-require 'vendor/autoload.php';
-require 'config.php';
 
-$client = new Maknz\Slack\Client($settings["slack"]["webhook_url"], $settings["slack"]);
-$guzzle = new GuzzleHttp\Client();
+namespace FlatFinder;
+
+use Maknz\Slack\Client as Slack;
+use GuzzleHttp\Client as Guzzle;
+
+require __DIR__ . '/../config.php';
+
+class Client
+{
+    /**
+     * @var Guzzle
+     */
+    protected $guzzle;
+
+    /**
+     * @var Slack
+     */
+    protected $slack;
+
+    public static function create(string $webhookUrl, $slackSettings)
+    {
+        return new self(new Guzzle(), new Slack($webhookUrl, $slackSettings));
+    }
+
+    public function __construct(Guzzle $guzzle, Slack $slack)
+    {
+        $this->guzzle = $guzzle;
+        $this->slack = $slack;
+    }
+}
 
 function getTravelToWorkDistances(&$fields, $lat, $lon) {
     global $settings;
 
-    if(empty($settings["google"]["key"]) || empty($settings["google"]["addresses"])) return;
+    if (empty($settings["google"]["key"]) || empty($settings["google"]["addresses"])) {
+        return;
+    }
 
     $addresses = "";
     $return = [];
 
-    foreach($settings["google"]["addresses"] as $place => $address) {
+    foreach ($settings["google"]["addresses"] as $place => $address) {
         $addresses .= rawurlencode($address)."|";
 
         $return[] = [
@@ -25,7 +53,7 @@ function getTravelToWorkDistances(&$fields, $lat, $lon) {
 
     $url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&mode=".$settings["google"]["transport"]."&origins=".$lat.",".$lon."&destinations=".rtrim($addresses, "|")."&key=".$settings["google"]["key"];
 
-    $guzzle = new GuzzleHttp\Client();
+    $guzzle = new Guzzle();
     $res = $guzzle->request('GET', $url);
 
     $json = json_decode($res->getBody());
@@ -94,7 +122,9 @@ function getBroadbandSpeeds(&$fields, $lat, $lon) {
 function getElevation(&$fields, $lat, $lon) {
     global $settings;
 
-    if(empty($settings["google"]["key"]) || !$settings["google"]["elevation"]["enabled"]) return false;
+    if (empty($settings["google"]["key"]) || !$settings["google"]["elevation"]["enabled"]) {
+        return false;
+    }
 
     $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=".$lat.",".$lon."&key=".$settings["google"]["key"];
 
@@ -111,15 +141,15 @@ function getElevation(&$fields, $lat, $lon) {
 
     $returnVal = true;
 
-    if(isset($json->results[0])) {
+    if (isset($json->results[0])) {
         $place = $json->results[0];
         $val = number_format($place->elevation, 0);
 
         $fieldReturn["value"] = $val." meters";
 
-        if($val <= $settings["google"]["elevation"]["threshold"]) {
+        if ($val <= $settings["google"]["elevation"]["threshold"]) {
             $diff = number_format(abs($val - $settings["google"]["elevation"]["threshold"]), 0);
-            
+
             $returnVal = [
                 'text'     => '*:rotating_light: This property is below your elevation threshold by '.$diff.' meters. Check your local tsunami risk zone map :rotating_light:*',
                 'fallback' => 'Elevation is below specified threshold',
@@ -147,11 +177,11 @@ $res = $guzzle->request('GET', $url, [
 
 $json = json_decode($res->getBody());
 
-if(property_exists($json, "List") && !empty($json->List)) {
-    foreach($json->List as $house) {
+if (property_exists($json, "List") && !empty($json->List)) {
+    foreach ($json->List as $house) {
         $lat = $house->GeographicLocation->Latitude ?? 0;
         $lon = $house->GeographicLocation->Longitude ?? 0;
-        
+
         $fields = [
             [
                 "title" => "Location",
@@ -187,7 +217,7 @@ if(property_exists($json, "List") && !empty($json->List)) {
 
         getBroadbandSpeeds($fields, $lat, $lon);
         getTravelToWorkDistances($fields, $lat, $lon);
-        
+
         $message = $client->createMessage();
 
         $elevation = getElevation($fields, $lat, $lon);
@@ -200,7 +230,7 @@ if(property_exists($json, "List") && !empty($json->List)) {
             "fields"     => $fields
         ]));
 
-        if(is_array($elevation)) {
+        if (is_array($elevation)) {
             $message->attach(new Maknz\Slack\Attachment($elevation));
         }
 

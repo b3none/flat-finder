@@ -1,5 +1,11 @@
 {
     "require": {
-        "maknz/slack": "^1.7"
+        "maknz/slack": "^1.7",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "FlatFinder\\": "src/"
+        }
     }
 }
